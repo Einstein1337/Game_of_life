@@ -42,8 +42,8 @@ def drawMatrix(matrix, surface):
                 x*side_lengh + 1, y*side_lengh + 1, side_lengh - 2, side_lengh - 2))
 
 def updateMatrix(matrix):
-    sx = squares_x
-    sy = squares_y
+    sx = squares_x - 1 
+    sy = squares_y - 1 
     neighbours = 0
     update_matrix = []  
     for i in range(squares_y):
@@ -51,40 +51,39 @@ def updateMatrix(matrix):
             for j in range(squares_x):
                 update_matrix[i].append(0)
 
-    for y in range(sy):
-        for x in range(sx):
+    for y in range(squares_y):
+        for x in range(squares_x):
             if matrix[y][x] == 1:
                 #rule 1: Live cell dies, if fewer than 2 Neighbours, underpopulation
+                if x == 0:#checking corners/edges
+                    if y == 0:
+                        neighbours += matrix[0][1] + matrix[1][0] + matrix[1][1] + matrix[sy][0] + matrix[sy][1] + matrix[0][sx] + matrix[1][sx] + matrix[sy][sx]
+                    elif y == sy:
+                        neighbours += matrix[y][1] + matrix[y-1][0] + matrix[y-1][1] + matrix[0][0] + matrix[0][1] + matrix[sy][sx] + matrix[sy-1][sx] + matrix[0][sx]
+                    else:
+                        neighbours += matrix[y-1][0] + matrix[y+1][0] + matrix[y-1][1] + matrix[y][1] + matrix[y+1][1] + matrix[y-1][sx] + matrix[y][sx] + matrix[y+1][sx]
 
-                if x == 0 and y == 0:#checking corners
-                    neighbours += matrix[0][1] + matrix[1][0] + matrix[1][1] + matrix[sy][0] + matrix[sy][1] + matrix[0][sx] + matrix[1][sx] + matrix[sy][sx]
-                    print(neighbours)
-                elif x == 0 and y == sy:
-                    neighbours += matrix[y][1] + matrix[y-1][0] + matrix[y-1][1] + matrix[0][0] + matrix[0][1] + matrix[sy][sx] + matrix[sy-1][sx] + matrix[0][sx]
-                    print(neighbours)
-                elif x == sx and y == 0:
-                    neighbours += matrix[0][x-1] + matrix[1][x] + matrix[1][x-1] + matrix[sy][sx] + matrix[sy][sx-1] + matrix[0][0] + matrix[1][0] + matrix[sy][0]
-                    print(neighbours)
-                elif x == sx and y == sy:
-                    neighbours += matrix[y][x-1] + matrix[y-1][x] + matrix[y-1][x-1] + matrix[sy][0] + matrix[sy-1][0] + matrix[0][sx] + matrix[0][sx-1] + matrix[0][0]
-                    print(neighbours)
-
-                elif x == 0:#checking edges
-                    pass
                 elif x == sx:
-                    pass
+                    if y == 0:
+                        neighbours += matrix[0][x-1] + matrix[1][x] + matrix[1][x-1] + matrix[sy][sx] + matrix[sy][sx-1] + matrix[0][0] + matrix[1][0] + matrix[sy][0]
+                    elif y == sy:
+                        neighbours += matrix[y][x-1] + matrix[y-1][x] + matrix[y-1][x-1] + matrix[sy][0] + matrix[sy-1][0] + matrix[0][sx] + matrix[0][sx-1] + matrix[0][0]
+                    else:
+                        neighbours += matrix[y-1][sx] + matrix[y+1][sx] + matrix[y-1][sx-1] + matrix[y][sx-1] + matrix[y+1][sx-1] + matrix[y-1][0] + matrix[y][0] + matrix[y+1][0]
+
                 elif y == 0:
-                    pass
+                    neighbours += matrix[0][x-1] + matrix[0][x+1] + matrix[1][x-1] + matrix[1][x] + matrix[1][x+1] + matrix[sy][x-1] + matrix[sy][x] + matrix[sy][x+1] 
                 elif y == sy:
-                    pass
+                    neighbours += matrix[sy][x-1] + matrix[sy][x+1] + matrix[sy-1][x-1] + matrix[sy-1][x] + matrix[sy-1][x+1] + matrix[0][x-1] + matrix[0][x] + matrix[0][x+1]
 
                 else:#checking all others
-                    pass
+                    neighbours += matrix[y-1][x] + matrix[y+1][x] + matrix[y][x-1] + matrix[y][x+1] + matrix[y+1][x+1] + matrix[y-1][x-1] + matrix[y+1][x-1] + matrix[y-1][x+1]
 
             else:
                 pass
-            
-            return update_matrix
+
+            neighbours = 0
+    return matrix
 
 class Game:
     """
@@ -130,8 +129,8 @@ class Game:
                 self.game_play = not self.game_play
             
             #update Matrix
-            if self.game_play:
-                matrix = updateMatrix(matrix)
+            #if self.game_play:
+            matrix = updateMatrix(matrix)
             #draw
             self.screen.fill(BG_COLOR)  # draw empty screen
             drawMatrix(matrix, self.screen)
