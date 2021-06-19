@@ -22,14 +22,16 @@ GRAY = (200, 200, 200)
 BLACK = (0, 0, 0)
 BG_COLOR = GRAY
 # other
-squares = 10
-side_lengh = WIN_WIDTH/squares
-
+squares_x = 10
+side_lengh = WIN_WIDTH/squares_x
+squares_y = int(WIN_HEIGHT/side_lengh)
+if WIN_HEIGHT - squares_y*side_lengh > 0:
+    WIN_HEIGHT = squares_y*side_lengh
 ## METHODS #
     
 def drawMatrix(matrix, surface):
-    for y in range(len(matrix)):
-        for x in range(len(matrix[y])):
+    for y in range(squares_y):
+        for x in range(squares_x):
             if matrix[y][x] == 0:
                 color = WHITE
             else:
@@ -39,20 +41,50 @@ def drawMatrix(matrix, surface):
             pygame.draw.rect(surface, color, pygame.Rect(
                 x*side_lengh + 1, y*side_lengh + 1, side_lengh - 2, side_lengh - 2))
 
-def updateMatrix(matrix): 
+def updateMatrix(matrix):
+    sx = squares_x
+    sy = squares_y
+    neighbours = 0
     update_matrix = []  
-    for i in range(squares):
+    for i in range(squares_y):
             update_matrix.append([])
-            for j in range(squares):
+            for j in range(squares_x):
                 update_matrix[i].append(0)
 
-    for y in range(len(matrix)):
-        for x in range(len(matrix[y])):
+    for y in range(sy):
+        for x in range(sx):
             if matrix[y][x] == 1:
                 #rule 1: Live cell dies, if fewer than 2 Neighbours, underpopulation
-                pass
+
+                if x == 0 and y == 0:#checking corners
+                    neighbours += matrix[0][1] + matrix[1][0] + matrix[1][1] + matrix[sy][0] + matrix[sy][1] + matrix[0][sx] + matrix[1][sx] + matrix[sy][sx]
+                    print(neighbours)
+                elif x == 0 and y == sy:
+                    neighbours += matrix[y][1] + matrix[y-1][0] + matrix[y-1][1] + matrix[0][0] + matrix[0][1] + matrix[sy][sx] + matrix[sy-1][sx] + matrix[0][sx]
+                    print(neighbours)
+                elif x == sx and y == 0:
+                    neighbours += matrix[0][x-1] + matrix[1][x] + matrix[1][x-1] + matrix[sy][sx] + matrix[sy][sx-1] + matrix[0][0] + matrix[1][0] + matrix[sy][0]
+                    print(neighbours)
+                elif x == sx and y == sy:
+                    neighbours += matrix[y][x-1] + matrix[y-1][x] + matrix[y-1][x-1] + matrix[sy][0] + matrix[sy-1][0] + matrix[0][sx] + matrix[0][sx-1] + matrix[0][0]
+                    print(neighbours)
+
+                elif x == 0:#checking edges
+                    pass
+                elif x == sx:
+                    pass
+                elif y == 0:
+                    pass
+                elif y == sy:
+                    pass
+
+                else:#checking all others
+                    pass
+
             else:
                 pass
+            
+            return update_matrix
 
 class Game:
     """
@@ -72,9 +104,9 @@ class Game:
 
     def play(self):
         matrix = []
-        for i in range(squares):
+        for i in range(squares_y):
             matrix.append([])
-            for j in range(squares):
+            for j in range(squares_x):
                 matrix[i].append(0)
         while True:
             #key events
@@ -102,7 +134,6 @@ class Game:
                 matrix = updateMatrix(matrix)
             #draw
             self.screen.fill(BG_COLOR)  # draw empty screen
-
             drawMatrix(matrix, self.screen)
 
             # Update
