@@ -4,40 +4,55 @@ from PIL import Image, ImageDraw
 import numpy as np
 from random import randint
 
+from pygame.constants import MOUSEBUTTONDOWN
+
 ## VARIABLES ##
 
-WIN_WIDTH = 500
+WIN_WIDTH = 1000
 WIN_HEIGHT = WIN_WIDTH
 
 # Framerate
-FPS = 30
+FPS = 10
 TIME_DELAY = int(1000 / FPS)
 update_per_second = 10
 
 # Colors
 WHITE = (255, 255, 255)
+GRAY = (200, 200, 200)
 BLACK = (0, 0, 0)
-BG_COLOR = WHITE
-
+BG_COLOR = GRAY
 # other
-squares = 50
+squares = 10
 side_lengh = WIN_WIDTH/squares
 
 ## METHODS #
-
-
+    
 def drawMatrix(matrix, surface):
     for y in range(len(matrix)):
         for x in range(len(matrix[y])):
             if matrix[y][x] == 0:
                 color = WHITE
-            elif matrix[y][x] == 1:
+            else:
                 color = BLACK
+                
 
             pygame.draw.rect(surface, color, pygame.Rect(
-                x*side_lengh, y*side_lengh, side_lengh, side_lengh))
-            pygame.display.flip()
+                x*side_lengh + 1, y*side_lengh + 1, side_lengh - 2, side_lengh - 2))
 
+def updateMatrix(matrix): 
+    update_matrix = []  
+    for i in range(squares):
+            update_matrix.append([])
+            for j in range(squares):
+                update_matrix[i].append(0)
+
+    for y in range(len(matrix)):
+        for x in range(len(matrix[y])):
+            if matrix[y][x] == 1:
+                #rule 1: Live cell dies, if fewer than 2 Neighbours, underpopulation
+                pass
+            else:
+                pass
 
 class Game:
     """
@@ -53,34 +68,46 @@ class Game:
         )  # create screen which will display everything
         self.win = pygame.display.set_mode((WIN_WIDTH, WIN_HEIGHT))
         pygame.display.set_caption("Simulation")  # Game title
+        self.game_play = False
 
     def play(self):
-        test_matrix = []
+        matrix = []
         for i in range(squares):
-            test_matrix.append([])
+            matrix.append([])
             for j in range(squares):
-                test_matrix[i].append(randint(0, 1))
-
+                matrix[i].append(0)
         while True:
-            pygame.time.delay(TIME_DELAY)
+            #key events
             for event in pygame.event.get():
                 # Exit app if click quit button
                 if event.type == pygame.QUIT:
                     run = False
-            keys = pygame.key.get_pressed()
+                if event.type == MOUSEBUTTONDOWN:
+                    if event.button == 1: #Leftclick
+                        (x, y) = pygame.mouse.get_pos()
+                        if matrix[int(y/side_lengh)][int(x/side_lengh)] == 0:
+                            matrix[int(y/side_lengh)][int(x/side_lengh)] = 1
+                        else:
+                            matrix[int(y/side_lengh)][int(x/side_lengh)] = 0
+                    
 
+            keys = pygame.key.get_pressed()
             if keys[pygame.K_ESCAPE]:
                 self.exit()
-
+            if keys[pygame.K_s]:
+                self.game_play = not self.game_play
+            
+            #update Matrix
+            if self.game_play:
+                matrix = updateMatrix(matrix)
+            #draw
             self.screen.fill(BG_COLOR)  # draw empty screen
-            drawMatrix(test_matrix, self.screen)
-            test_matrix = []
-            for i in range(squares):
-                test_matrix.append([])
-                for j in range(squares):
-                    test_matrix[i].append(randint(0, 1))
+
+            drawMatrix(matrix, self.screen)
 
             # Update
+            pygame.time.delay(TIME_DELAY)
+            pygame.display.flip()
             pygame.display.update()
         pygame.quit()
 
