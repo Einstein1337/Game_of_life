@@ -1,0 +1,9 @@
+place/delete cells: 	left mouse click
+start/stop generation: 	s / space
+clear grid: 		delete / backspace
+toggle FPS: 		up/down arrow
+generate random grid: 	r
+quit game: 		esc
+
+green ball = generation running
+red ball = generation pause

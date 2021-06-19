@@ -168,6 +168,13 @@ class Game:
                         else:
                             if self.fps < 60:
                                 self.fps = 60
+                    
+                    if event.key == pygame.K_r:
+                        matrix = []
+                        for i in range(squares_y):
+                            matrix.append([])
+                            for j in range(squares_x):
+                                matrix[i].append(randint(0,1))
 
 
             keys = pygame.key.get_pressed()
