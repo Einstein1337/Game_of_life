@@ -9,7 +9,7 @@ from pygame import fastevent
 from pygame.constants import KEYDOWN, MOUSEBUTTONDOWN, MOUSEBUTTONUP, MOUSEMOTION
 
 ## VARIABLES ##
-extra_space = 80
+extra_space = 110
 WIN_WIDTH = 1000
 WIN_HEIGHT = 500 + extra_space
 
@@ -29,7 +29,8 @@ side_lengh = WIN_WIDTH/squares_x
 squares_y = int((WIN_HEIGHT-extra_space)/side_lengh)
 if WIN_HEIGHT/side_lengh - squares_y > 0:
     WIN_HEIGHT = int(squares_y*side_lengh) + extra_space
-text_size = 24
+text_size1 = 24
+text_size2 = 18
 # keys
 delete_down = False
 backspace_down = False
@@ -38,13 +39,25 @@ space_down = False
 ## METHODS #
 
 
-def drawExtraSpace(surface, color, font, fps):
+def drawExtraSpace(surface, color, font1, font2, fps):
     pygame.draw.rect(surface, WHITE, pygame.Rect(
         0, 0, WIN_WIDTH, extra_space-1))
     pygame.draw.circle(surface, color, (WIN_WIDTH/2,
                                         (extra_space-1)/2), (extra_space/2) * 0.6)
-    img = font.render(f'FPS: {fps}', True, BLACK)
-    surface.blit(img, (WIN_WIDTH-80, extra_space - text_size))
+    img = [font1.render(f'FPS: {fps}', True, BLACK),
+           font2.render(
+               'place / delete cells:            left mouse click', True, BLACK),
+           font2.render(
+               'start / stop generation:     s / space', True, BLACK),
+           font2.render(
+               'clear grid:                             delete / backspace', True, BLACK),
+           font2.render(
+               'toggle FPS:                           up / down arrow', True, BLACK),
+           font2.render('generate random grid:       r', True, BLACK),
+           font2.render('quit game:                             esc', True, BLACK)]
+    surface.blit(img[0], (WIN_WIDTH-70, extra_space - text_size1))
+    for i in range(len(img)-1):
+        surface.blit(img[i+1], (1, 1+i*text_size2))
 
 
 def drawMatrix(matrix, surface):
@@ -154,7 +167,8 @@ class Game:
         draw = False
         erase = False
         self.fps = FPS
-        font = pygame.font.SysFont('Arial.ttf', text_size)
+        font1 = pygame.font.SysFont('Arial.ttf', text_size1)
+        font2 = pygame.font.SysFont('Arial.ttf', text_size2)
         matrix = []
         for i in range(squares_y):
             matrix.append([])
@@ -258,7 +272,8 @@ class Game:
 
             # draw
             self.screen.fill(BG_COLOR)  # draw empty screen
-            drawExtraSpace(self.screen, running_button_color, font, self.fps)
+            drawExtraSpace(self.screen, running_button_color,
+                           font1, font2, self.fps)
             drawMatrix(matrix, self.screen)
 
             # Update
