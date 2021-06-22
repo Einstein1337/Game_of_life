@@ -4,6 +4,7 @@ from PIL import Image, ImageDraw
 import numpy as np
 from random import randint
 from pygame import mouse
+from pygame import fastevent
 
 from pygame.constants import KEYDOWN, MOUSEBUTTONDOWN, MOUSEBUTTONUP, MOUSEMOTION
 
@@ -159,6 +160,8 @@ class Game:
             matrix.append([])
             for j in range(squares_x):
                 matrix[i].append(0)
+        frame = 0
+        fps_update = False
         while True:
             # key events
             for event in pygame.event.get():
@@ -228,17 +231,27 @@ class Game:
                 self.exit()
 
             if keys[pygame.K_DOWN]:
+                fps_update = True
                 if self.fps > 1:
+                    frame = 0
                     self.fps -= 1
 
             if keys[pygame.K_UP]:
+                fps_update = True
                 if self.fps < 120:
+                    frame = 0
                     self.fps += 1
 
             # update Matrix
             if self.game_play:
                 running_button_color = GREEN
-                matrix = updateMatrix(matrix)
+                if fps_update:
+                    matrix = updateMatrix(matrix)
+                else:
+                    frame += 3
+                    if frame >= int(1000/self.fps):
+                        matrix = updateMatrix(matrix)
+                        frame = 0
 
             else:
                 running_button_color = RED
@@ -249,8 +262,9 @@ class Game:
             drawMatrix(matrix, self.screen)
 
             # Update
-
-            pygame.time.delay(int(1000/self.fps))
+            if fps_update:
+                pygame.time.delay(int(1000/self.fps))
+                fps_update = False
             pygame.display.flip()
             pygame.display.update()
         pygame.quit()
