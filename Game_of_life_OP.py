@@ -1,4 +1,5 @@
 import os
+from numpy.core.fromnumeric import _resize_dispatcher
 import pygame
 from PIL import Image, ImageDraw
 import numpy as np
@@ -36,6 +37,14 @@ delete_down = False
 backspace_down = False
 s_down = False
 space_down = False
+
+# Cell Class
+
+
+class Cell:
+    def __init__(self, xy):
+        self.xy = xy
+
 ## METHODS #
 
 
@@ -79,87 +88,103 @@ def checkIfCellAlife(lc, xy):
             if lc[i].xy == xy:
                 position_in_list = i
                 living = True
-                print(i)
-                print(position_in_list)
     return [living, position_in_list]
 
 
-def updateMatrix(matrix):
-    sx = squares_x - 1
-    sy = squares_y - 1
+def updateCells(lc):
+    # sx = squares_x - 1
+    # sy = squares_y - 1
     neighbours = 0
-    update_matrix = []
-    for i in range(squares_y):
-        update_matrix.append([])
-        for j in range(squares_x):
-            update_matrix[i].append(0)
+    updated_living_cells = []
+    neighbour_coordinates = []
+    dead_cells_arround_living_cells = []
 
-    for y in range(squares_y):
-        for x in range(squares_x):
-            # detecting neighbours
-            if x == 0:  # checking corners/edges
-                if y == 0:
-                    neighbours += matrix[0][1] + matrix[1][0] + matrix[1][1] + matrix[sy][0] + \
-                        matrix[sy][1] + matrix[0][sx] + \
-                        matrix[1][sx] + matrix[sy][sx]
-                elif y == sy:
-                    neighbours += matrix[y][1] + matrix[y-1][0] + matrix[y-1][1] + matrix[0][0] + \
-                        matrix[0][1] + matrix[sy][sx] + \
-                        matrix[sy-1][sx] + matrix[0][sx]
-                else:
-                    neighbours += matrix[y-1][0] + matrix[y+1][0] + matrix[y-1][1] + matrix[y][1] + \
-                        matrix[y+1][1] + matrix[y-1][sx] + \
-                        matrix[y][sx] + matrix[y+1][sx]
+    for i in range(len(lc)):
+        x = lc[i].xy[0]
+        y = lc[i].xy[1]
+        for j in range(len(lc)):  # checking neighbours
+            if lc[j].xy != [x, y]:
+                if np.abs(lc[j].xy[0] - x) <= 1 and np.abs(lc[j].xy[1] - y) <= 1:
+                    neighbours += 1
+                    neighbour_coordinates.append(lc[j].xy)
+        dead_cells_arround_living_cells.append([Cell([x, y+1]), Cell([x, y-1]), Cell([x+1, y]), Cell(
+            [x-1, y]), Cell([x+1, y+1]), Cell([x+1, y-1]), Cell([x-1, y+1]), Cell([x-1, y-1])])
 
-            elif x == sx:
-                if y == 0:
-                    neighbours += matrix[0][x-1] + matrix[1][x] + matrix[1][x-1] + \
-                        matrix[sy][sx] + matrix[sy][sx-1] + \
-                        matrix[0][0] + matrix[1][0] + matrix[sy][0]
-                elif y == sy:
-                    neighbours += matrix[y][x-1] + matrix[y-1][x] + matrix[y-1][x-1] + \
-                        matrix[sy][0] + matrix[sy-1][0] + \
-                        matrix[0][sx] + matrix[0][sx-1] + matrix[0][0]
-                else:
-                    neighbours += matrix[y-1][sx] + matrix[y+1][sx] + matrix[y-1][sx-1] + \
-                        matrix[y][sx-1] + matrix[y+1][sx-1] + \
-                        matrix[y-1][0] + matrix[y][0] + matrix[y+1][0]
+        deleted_cells = 0
+        for k in range(neighbours):
+            for f in range(len(dead_cells_arround_living_cells[i])):
+                if neighbour_coordinates[k] == dead_cells_arround_living_cells[i][f - deleted_cells].xy:
+                    del dead_cells_arround_living_cells[i][f]
+                    deleted_cells += 1
+                    f += deleted_cells
 
-            elif y == 0:
-                neighbours += matrix[0][x-1] + matrix[0][x+1] + matrix[1][x-1] + matrix[1][x] + \
-                    matrix[1][x+1] + matrix[sy][x-1] + \
-                    matrix[sy][x] + matrix[sy][x+1]
-            elif y == sy:
-                neighbours += matrix[sy][x-1] + matrix[sy][x+1] + matrix[sy-1][x-1] + matrix[sy -
-                                                                                             1][x] + matrix[sy-1][x+1] + matrix[0][x-1] + matrix[0][x] + matrix[0][x+1]
+        print(len(dead_cells_arround_living_cells))
+        # Rule 1: Life cell with 2 or 3 neighbours, survives
+        # Rule 2: Dead cell with ecatly 3 neighbours, becomes lifing cell
+        # Rule 3: All other cells die, stay dead
 
-            else:  # checking all others
-                neighbours += matrix[y-1][x] + matrix[y+1][x] + matrix[y][x-1] + matrix[y][x+1] + \
-                    matrix[y+1][x+1] + matrix[y-1][x-1] + \
-                    matrix[y+1][x-1] + matrix[y-1][x+1]
+        if neighbours == 2 or neighbours == 3:
+            updated_living_cells.append(Cell(lc[i].xy))
 
-            # Rule 1: Life cell with 2 or 3 neighbours, survives
-            # Rule 2: Dead cell with ecatly 3 neighbours, becomes lifing cell
-            # Rule 3: All other cells die, stay dead
+        neighbour_coordinates = []
+        neighbours = 0
+        # for y in range(squares_y):
+        #     for x in range(squares_x):
+        #         # detecting neighbours
+        #         if x == 0:  # checking corners/edges
+        #             if y == 0:
+        #                 neighbours += matrix[0][1] + matrix[1][0] + matrix[1][1] + matrix[sy][0] + \
+        #                     matrix[sy][1] + matrix[0][sx] + \
+        #                     matrix[1][sx] + matrix[sy][sx]
+        #             elif y == sy:
+        #                 neighbours += matrix[y][1] + matrix[y-1][0] + matrix[y-1][1] + matrix[0][0] + \
+        #                     matrix[0][1] + matrix[sy][sx] + \
+        #                     matrix[sy-1][sx] + matrix[0][sx]
+        #             else:
+        #                 neighbours += matrix[y-1][0] + matrix[y+1][0] + matrix[y-1][1] + matrix[y][1] + \
+        #                     matrix[y+1][1] + matrix[y-1][sx] + \
+        #                     matrix[y][sx] + matrix[y+1][sx]
 
-            if matrix[y][x] == 1:
-                if neighbours == 2 or neighbours == 3:
-                    update_matrix[y][x] = 1
-                else:
-                    update_matrix[y][x] = 0
+        #         elif x == sx:
+        #             if y == 0:
+        #                 neighbours += matrix[0][x-1] + matrix[1][x] + matrix[1][x-1] + \
+        #                     matrix[sy][sx] + matrix[sy][sx-1] + \
+        #                     matrix[0][0] + matrix[1][0] + matrix[sy][0]
+        #             elif y == sy:
+        #                 neighbours += matrix[y][x-1] + matrix[y-1][x] + matrix[y-1][x-1] + \
+        #                     matrix[sy][0] + matrix[sy-1][0] + \
+        #                     matrix[0][sx] + matrix[0][sx-1] + matrix[0][0]
+        #             else:
+        #                 neighbours += matrix[y-1][sx] + matrix[y+1][sx] + matrix[y-1][sx-1] + \
+        #                     matrix[y][sx-1] + matrix[y+1][sx-1] + \
+        #                     matrix[y-1][0] + matrix[y][0] + matrix[y+1][0]
 
-            else:
-                if neighbours == 3:
-                    update_matrix[y][x] = 1
+        #         elif y == 0:
+        #             neighbours += matrix[0][x-1] + matrix[0][x+1] + matrix[1][x-1] + matrix[1][x] + \
+        #                 matrix[1][x+1] + matrix[sy][x-1] + \
+        #                 matrix[sy][x] + matrix[sy][x+1]
+        #         elif y == sy:
+        #             neighbours += matrix[sy][x-1] + matrix[sy][x+1] + matrix[sy-1][x-1] + matrix[sy -
+        #                                                                                          1][x] + matrix[sy-1][x+1] + matrix[0][x-1] + matrix[0][x] + matrix[0][x+1]
 
-            neighbours = 0
+        #         else:  # checking all others
+        #             neighbours += matrix[y-1][x] + matrix[y+1][x] + matrix[y][x-1] + matrix[y][x+1] + \
+        #                 matrix[y+1][x+1] + matrix[y-1][x-1] + \
+        #                 matrix[y+1][x-1] + matrix[y-1][x+1]
 
-    return update_matrix
+        # if matrix[y][x] == 1:
+        #     if neighbours == 2 or neighbours == 3:
+        #         updated_living_cells[y][x] = 1
+        #     else:
+        #         updated_living_cells[y][x] = 0
 
+        # else:
+        #     if neighbours == 3:
+        #         updated_living_cells[y][x] = 1
 
-class Cell:
-    def __init__(self, xy):
-        self.xy = xy
+        # neighbours = 0
+
+    return updated_living_cells
 
 
 class Game:
@@ -170,8 +195,6 @@ class Game:
     def __init__(self):
         pygame.init()
         pygame.font.init()
-        print(WIN_HEIGHT)
-        print(WIN_WIDTH)
         self.screen = pygame.display.set_mode(
             (WIN_WIDTH, WIN_HEIGHT)
         )  # create screen which will display everything
@@ -276,11 +299,11 @@ class Game:
             if self.game_play:
                 running_button_color = GREEN
                 if fps_update:
-                    matrix = updateMatrix(matrix)
+                    self.living_cells = updateCells(self.living_cells)
                 else:
                     frame += 3
                     if frame >= int(1000/self.fps):
-                        matrix = updateMatrix(matrix)
+                        self.living_cells = updateCells(self.living_cells)
                         frame = 0
 
             else:
