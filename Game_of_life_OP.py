@@ -98,91 +98,62 @@ def updateCells(lc):
     updated_living_cells = []
     neighbour_coordinates = []
     dead_cells_arround_living_cells = []
-
     for i in range(len(lc)):
         x = lc[i].xy[0]
         y = lc[i].xy[1]
-        for j in range(len(lc)):  # checking neighbours
+        for j in range(len(lc)):  # checking living neighbours
             if lc[j].xy != [x, y]:
                 if np.abs(lc[j].xy[0] - x) <= 1 and np.abs(lc[j].xy[1] - y) <= 1:
                     neighbours += 1
                     neighbour_coordinates.append(lc[j].xy)
-        dead_cells_arround_living_cells.append([Cell([x, y+1]), Cell([x, y-1]), Cell([x+1, y]), Cell(
+
+        dead_cells_arround_living_cells.append([Cell([x, y+1]), Cell([x, y-1]), Cell([x+1, y]), Cell( #creates List with all neighbours
             [x-1, y]), Cell([x+1, y+1]), Cell([x+1, y-1]), Cell([x-1, y+1]), Cell([x-1, y-1])])
 
-        deleted_cells = 0
-        for k in range(neighbours):
+        deleted_cells = 0 
+        for k in range(neighbours): #deletes all living neighbours from list
             for f in range(len(dead_cells_arround_living_cells[i])):
                 if neighbour_coordinates[k] == dead_cells_arround_living_cells[i][f - deleted_cells].xy:
-                    del dead_cells_arround_living_cells[i][f]
+                    del dead_cells_arround_living_cells[i][f - deleted_cells]
                     deleted_cells += 1
                     f += deleted_cells
+            deleted_cells = 0
 
-        print(len(dead_cells_arround_living_cells))
+        deleted_cells = 0 #deletes all duplicated dead neighbours to get list with all dead neighbours arround living cells
+        for r in range(len(dead_cells_arround_living_cells)):
+            for c in range(len(dead_cells_arround_living_cells[r])):
+                for r2 in range(len(dead_cells_arround_living_cells)):
+                    if r != r2:
+                        for c2 in range(len(dead_cells_arround_living_cells[r2])):
+                            if dead_cells_arround_living_cells[r][c].xy == dead_cells_arround_living_cells[r2][c2 - deleted_cells].xy:
+                                del dead_cells_arround_living_cells[r2][c2 - deleted_cells]
+                                deleted_cells += 1
+                                c2 += deleted_cells
+                        deleted_cells = 0
+                        
         # Rule 1: Life cell with 2 or 3 neighbours, survives
         # Rule 2: Dead cell with ecatly 3 neighbours, becomes lifing cell
         # Rule 3: All other cells die, stay dead
 
-        if neighbours == 2 or neighbours == 3:
+        if neighbours == 2 or neighbours == 3: #if ¨to little or to many neighbours die, else life
             updated_living_cells.append(Cell(lc[i].xy))
 
         neighbour_coordinates = []
         neighbours = 0
-        # for y in range(squares_y):
-        #     for x in range(squares_x):
-        #         # detecting neighbours
-        #         if x == 0:  # checking corners/edges
-        #             if y == 0:
-        #                 neighbours += matrix[0][1] + matrix[1][0] + matrix[1][1] + matrix[sy][0] + \
-        #                     matrix[sy][1] + matrix[0][sx] + \
-        #                     matrix[1][sx] + matrix[sy][sx]
-        #             elif y == sy:
-        #                 neighbours += matrix[y][1] + matrix[y-1][0] + matrix[y-1][1] + matrix[0][0] + \
-        #                     matrix[0][1] + matrix[sy][sx] + \
-        #                     matrix[sy-1][sx] + matrix[0][sx]
-        #             else:
-        #                 neighbours += matrix[y-1][0] + matrix[y+1][0] + matrix[y-1][1] + matrix[y][1] + \
-        #                     matrix[y+1][1] + matrix[y-1][sx] + \
-        #                     matrix[y][sx] + matrix[y+1][sx]
 
-        #         elif x == sx:
-        #             if y == 0:
-        #                 neighbours += matrix[0][x-1] + matrix[1][x] + matrix[1][x-1] + \
-        #                     matrix[sy][sx] + matrix[sy][sx-1] + \
-        #                     matrix[0][0] + matrix[1][0] + matrix[sy][0]
-        #             elif y == sy:
-        #                 neighbours += matrix[y][x-1] + matrix[y-1][x] + matrix[y-1][x-1] + \
-        #                     matrix[sy][0] + matrix[sy-1][0] + \
-        #                     matrix[0][sx] + matrix[0][sx-1] + matrix[0][0]
-        #             else:
-        #                 neighbours += matrix[y-1][sx] + matrix[y+1][sx] + matrix[y-1][sx-1] + \
-        #                     matrix[y][sx-1] + matrix[y+1][sx-1] + \
-        #                     matrix[y-1][0] + matrix[y][0] + matrix[y+1][0]
+    d_cell_l_neighbours = 0
+    for row in range(len(dead_cells_arround_living_cells)):
+        for column in range(len(dead_cells_arround_living_cells[row])):
+            x = dead_cells_arround_living_cells[row][column].xy[0]
+            y = dead_cells_arround_living_cells[row][column].xy[1]
+            for cell in range(len(lc)):  # checking living neighbours from dead cell
+                if np.abs(lc[cell].xy[0] - x) <= 1 and np.abs(lc[cell].xy[1] - y) <= 1:
+                    d_cell_l_neighbours += 1
 
-        #         elif y == 0:
-        #             neighbours += matrix[0][x-1] + matrix[0][x+1] + matrix[1][x-1] + matrix[1][x] + \
-        #                 matrix[1][x+1] + matrix[sy][x-1] + \
-        #                 matrix[sy][x] + matrix[sy][x+1]
-        #         elif y == sy:
-        #             neighbours += matrix[sy][x-1] + matrix[sy][x+1] + matrix[sy-1][x-1] + matrix[sy -
-        #                                                                                          1][x] + matrix[sy-1][x+1] + matrix[0][x-1] + matrix[0][x] + matrix[0][x+1]
+            if d_cell_l_neighbours == 3: #if exactly 3 living neighbours => come alive
+                updated_living_cells.append(Cell(dead_cells_arround_living_cells[row][column].xy))
 
-        #         else:  # checking all others
-        #             neighbours += matrix[y-1][x] + matrix[y+1][x] + matrix[y][x-1] + matrix[y][x+1] + \
-        #                 matrix[y+1][x+1] + matrix[y-1][x-1] + \
-        #                 matrix[y+1][x-1] + matrix[y-1][x+1]
-
-        # if matrix[y][x] == 1:
-        #     if neighbours == 2 or neighbours == 3:
-        #         updated_living_cells[y][x] = 1
-        #     else:
-        #         updated_living_cells[y][x] = 0
-
-        # else:
-        #     if neighbours == 3:
-        #         updated_living_cells[y][x] = 1
-
-        # neighbours = 0
+            d_cell_l_neighbours = 0
 
     return updated_living_cells
 
