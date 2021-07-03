@@ -62,7 +62,6 @@ def drawExtraSpace(surface, color, font1, font2, fps):
                'clear grid:                             delete / backspace', True, BLACK),
            font2.render(
                'toggle FPS:                           up / down arrow', True, BLACK),
-           font2.render('generate random grid:       r', True, BLACK),
            font2.render('quit game:                             esc', True, BLACK)]
     surface.blit(img[0], (WIN_WIDTH-70, extra_space - text_size1))
     for i in range(len(img)-1):
@@ -76,8 +75,9 @@ def drawGrid(lc, surface):
                 x*side_lengh + 1, y*side_lengh + extra_space + 1, side_lengh - 2, side_lengh - 2))
 
     for i in range(len(lc)):
-        pygame.draw.rect(surface, BLACK, pygame.Rect(
-            lc[i].xy[0]*side_lengh + 1, lc[i].xy[1]*side_lengh + extra_space + 1, side_lengh - 2, side_lengh - 2))
+        if lc[i].xy[0]*side_lengh >= 0 and lc[i].xy[0]*side_lengh <= WIN_WIDTH and lc[i].xy[1]*side_lengh >= 0 and lc[i].xy[1]*side_lengh <= WIN_HEIGHT:
+            pygame.draw.rect(surface, BLACK, pygame.Rect(
+                lc[i].xy[0]*side_lengh + 1, lc[i].xy[1]*side_lengh + extra_space + 1, side_lengh - 2, side_lengh - 2))
 
 
 def checkIfCellAlife(lc, xy):
@@ -118,19 +118,6 @@ def updateCells(lc):
                     deleted_cells += 1
                     f += deleted_cells
             deleted_cells = 0
-
-        deleted_cells = 0 #deletes all duplicated dead neighbours to get list with all dead neighbours arround living cells
-        for r in range(len(dead_cells_arround_living_cells)):
-            for c in range(len(dead_cells_arround_living_cells[r])):
-                for r2 in range(len(dead_cells_arround_living_cells)):
-                    if r != r2:
-                        for c2 in range(len(dead_cells_arround_living_cells[r2])):
-                            if dead_cells_arround_living_cells[r][c].xy == dead_cells_arround_living_cells[r2][c2 - deleted_cells].xy:
-                                del dead_cells_arround_living_cells[r2][c2 - deleted_cells]
-                                deleted_cells += 1
-                                c2 += deleted_cells
-                        deleted_cells = 0
-                        
         # Rule 1: Life cell with 2 or 3 neighbours, survives
         # Rule 2: Dead cell with ecatly 3 neighbours, becomes lifing cell
         # Rule 3: All other cells die, stay dead
@@ -141,12 +128,29 @@ def updateCells(lc):
         neighbour_coordinates = []
         neighbours = 0
 
-    d_cell_l_neighbours = 0
+
+    deleted_cells = 0 #deletes all duplicated dead neighbours to get list with all dead neighbours arround living cells
+    for r in range(len(dead_cells_arround_living_cells)):
+        for c in range(len(dead_cells_arround_living_cells[r])):
+            for r2 in range(len(dead_cells_arround_living_cells)):
+                x1 = dead_cells_arround_living_cells[r][c].xy[0]
+                y1 = dead_cells_arround_living_cells[r][c].xy[1]
+                x2 = dead_cells_arround_living_cells[r][0].xy[0]
+                y2 = dead_cells_arround_living_cells[r][0].xy[1] - 1
+                if r != r2 and x1 - x2 > -3 and x1 - x2 < 3 and y1 - y2 > -3 and y1 - y2 < 3:
+                    for c2 in range(len(dead_cells_arround_living_cells[r2])):
+                        if dead_cells_arround_living_cells[r][c].xy == dead_cells_arround_living_cells[r2][c2 - deleted_cells].xy:
+                            del dead_cells_arround_living_cells[r2][c2 - deleted_cells]
+                            deleted_cells += 1
+                            c2 += deleted_cells
+                    deleted_cells = 0
+
+    d_cell_l_neighbours = 0 #checking living neighbours from dead cell
     for row in range(len(dead_cells_arround_living_cells)):
         for column in range(len(dead_cells_arround_living_cells[row])):
             x = dead_cells_arround_living_cells[row][column].xy[0]
             y = dead_cells_arround_living_cells[row][column].xy[1]
-            for cell in range(len(lc)):  # checking living neighbours from dead cell
+            for cell in range(len(lc)):  
                 if np.abs(lc[cell].xy[0] - x) <= 1 and np.abs(lc[cell].xy[1] - y) <= 1:
                     d_cell_l_neighbours += 1
 
@@ -228,11 +232,7 @@ class Game:
 
                 if event.type == KEYDOWN:
                     if event.key == pygame.K_DELETE or event.key == pygame.K_BACKSPACE:
-                        matrix = []
-                        for i in range(squares_y):
-                            matrix.append([])
-                            for j in range(squares_x):
-                                matrix[i].append(0)
+                        self.living_cells = []
 
                     if event.key == pygame.K_s or event.key == pygame.K_SPACE:
                         self.game_play = not self.game_play
@@ -243,12 +243,6 @@ class Game:
                             if self.fps < 60:
                                 self.fps = 60
 
-                    if event.key == pygame.K_r:
-                        matrix = []
-                        for i in range(squares_y):
-                            matrix.append([])
-                            for j in range(squares_x):
-                                matrix[i].append(randint(0, 1))
 
             keys = pygame.key.get_pressed()
             if keys[pygame.K_ESCAPE]:
